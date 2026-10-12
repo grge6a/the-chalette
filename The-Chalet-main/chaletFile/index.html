@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chalet Booking Ledger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --pine-dark:#132A22;
+    --pine:#20463A;
+    --pine-soft:#2E5A4B;
+    --parchment:#EEEBE0;
+    --parchment-panel:#F7F5EC;
+    --ink:#182420;
+    --mist:#7C9289;
+    --birch:#C9AD7D;
+    --birch-soft:#E4D8B9;
+    --berry:#7A2E33;
+    --berry-soft:#F0DCDA;
+    --gold:#AD8A3D;
+    --slate:#4B5C58;
+    --slate-soft:#DEE3DF;
+    --night:#2A3B55;
+    --night-soft:#DCE0E8;
+    --gold-soft:#EFE4C5;
+    --line:#D8D2C0;
+    --radius:10px;
+    --shadow:0 2px 6px rgba(19,42,34,0.08), 0 8px 24px rgba(19,42,34,0.06);
+  }
+  html[data-theme="dark"]{
+    --pine-dark:#DCE9E2;
+    --pine:#9FC6B4;
+    --pine-soft:#7FAE97;
+    --parchment:#141B18;
+    --parchment-panel:#1C2521;
+    --ink:#E8E8E2;
+    --mist:#8B9C93;
+    --birch:#C9AD7D;
+    --birch-soft:#3A3327;
+    --berry:#D98B90;
+    --berry-soft:#3A2224;
+    --gold:#D4B45E;
+    --slate:#8FA39B;
+    --slate-soft:#28312D;
+    --night:#7C93BE;
+    --night-soft:#232B3A;
+    --gold-soft:#332C1A;
+    --line:#3A423E;
+    --shadow:0 2px 6px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
+  }
+  html[dir="rtl"] .type-toggle button,
+  html[dir="rtl"] .field label{ text-align:right; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 24px 64px;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--birch-soft);}
+  :focus-visible{outline:2px solid var(--pine); outline-offset:2px; border-radius:4px;}
+
+  .wrap{max-width:1180px;margin:0 auto;}
+  .print-only{display:none;}
+
+  /* Header */
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    padding-bottom:22px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:28px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--mist);
+    margin:0 0 6px;
+  }
+  .title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  h1{
+    font-family:'Spectral',serif;
+    font-weight:600;
+    font-size:clamp(26px,4vw,38px);
+    margin:0;
+    color:var(--pine-dark);
+    line-height:1.05;
+  }
+  .chalet-select{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:7px 10px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--pine-dark);
+    cursor:pointer;
+  }
+  .add-chalet-btn{
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    background:none;
+    border:1px dashed var(--pine-soft);
+    color:var(--pine-dark);
+    padding:6px 10px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .add-chalet-btn:hover{background:var(--birch-soft);}
+  .month-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .month-nav button{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--parchment-panel);
+    color:var(--pine-dark);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s, transform .1s;
+  }
+  .month-nav button:hover{background:var(--birch-soft);}
+  .month-nav button:active{transform:scale(.94);}
+  .month-label{
+    font-size:15px;
+    min-width:150px;
+    text-align:center;
+    color:var(--ink);
+    letter-spacing:.02em;
+  }
+  .today-btn{
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    background:none;
+    border:1px solid var(--pine-soft);
+    color:var(--pine-dark);
+    padding:6px 12px;
+    border-radius:100px;
+    cursor:pointer;
+  }
+  .today-btn:hover{background:var(--pine-dark);color:var(--parchment-panel);}
+
+  /* Layout */
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:26px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  /* Calendar card */
+  .cal-card{
+    background:var(--parchment-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+  }
+  .weekdays{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--mist);
+    padding-bottom:8px;
+    margin-bottom:6px;
+    border-bottom:1px dashed var(--line);
+  }
+  .weekdays div{text-align:center;padding:4px 0;}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+  }
+  .day{
+    position:relative;
+    aspect-ratio:1/0.92;
+    border-radius:8px;
+    border:1px solid transparent;
+    background:transparent;
+    padding:6px 6px;
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    transition:background .12s, border-color .12s;
+    font-family:'Inter',sans-serif;
+  }
+  .day.filler{visibility:hidden;pointer-events:none;}
+  .day:not(.booked):not(.filler):hover{background:var(--birch-soft);}
+  .day-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink);
+  }
+  .day.today .day-num{
+    background:var(--pine-dark);
+    color:#fff;
+    width:20px;height:20px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .day.past .day-num{color:var(--mist);}
+  .day.in-range{background:var(--birch-soft); border-color:var(--birch);}
+  .day.range-edge{background:var(--birch); border-color:var(--gold);}
+  .day.booked{background:var(--berry-soft); border-color:var(--berry);}
+  .day.booked:hover{filter:brightness(0.97);}
+  .day.maintenance{background:var(--slate-soft); border-color:var(--slate);}
+
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    font-weight:500;
+    background:var(--berry);
+    color:#fff;
+    padding:2px 6px;
+    border-radius:4px;
+    align-self:flex-start;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .tag.maintenance{background:var(--slate);}
+  .day-tags{display:flex;gap:3px;flex-wrap:wrap;}
+  .day-tags .tag{font-size:9px;padding:1px 4px;cursor:pointer;}
+  .tag.morning{background:var(--gold);color:var(--ink);}
+  .tag.evening{background:var(--night);}
+
+  .legend{
+    display:flex;gap:16px;
+    margin-top:16px;
+    font-size:12px;
+    color:var(--mist);
+    flex-wrap:wrap;
+  }
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .legend-note{font-size:11.5px;color:var(--mist);margin-top:6px;}
+
+  /* Sidebar */
+  .side{display:flex;flex-direction:column;gap:18px;}
+  .panel{
+    background:var(--parchment-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+  }
+  .panel h2{
+    font-family:'Spectral',serif;
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--pine-dark);
+  }
+  .panel .sub{
+    font-size:12.5px;
+    color:var(--mist);
+    margin:0 0 16px;
+  }
+  .field{margin-bottom:14px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--pine-dark);
+    margin-bottom:5px;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .field textarea{resize:vertical;min-height:56px;}
+  .field .dates-readout{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:9px 10px;
+    color:var(--pine-dark);
+  }
+  .btn{
+    width:100%;
+    padding:10px 14px;
+    border-radius:100px;
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:opacity .12s, transform .1s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--pine-dark);color:#fff;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary:hover:not(:disabled){background:var(--pine);}
+  .btn-danger{background:none;color:var(--berry);border:1px solid var(--berry);margin-top:8px;}
+  .btn-danger:hover{background:var(--berry);color:#fff;}
+  .btn-ghost{background:none;color:var(--mist);border:1px solid var(--line);margin-top:8px;}
+  .btn-ghost:hover{background:var(--birch-soft);color:var(--ink);}
+  .btn-whatsapp{background:#25D366;color:#fff;margin-top:8px;text-decoration:none;display:block;text-align:center;}
+  .btn-whatsapp:hover{opacity:.9;}
+
+  .type-toggle{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .type-toggle button{
+    flex:1;
+    min-width:90px;
+    padding:8px 6px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    color:var(--mist);
+    cursor:pointer;
+  }
+  .type-toggle button.active{background:var(--pine-dark);color:#fff;border-color:var(--pine-dark);}
+  .type-toggle button.active.is-maintenance{background:var(--slate);border-color:var(--slate);}
+  .type-toggle button.active.is-morning{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  .type-toggle button.active.is-evening{background:var(--night);border-color:var(--night);}
+
+  .error-msg{
+    font-size:12.5px;
+    color:var(--berry);
+    background:var(--berry-soft);
+    border:1px solid var(--berry);
+    padding:8px 10px;
+    border-radius:7px;
+    margin-bottom:12px;
+  }
+  .hint{
+    font-size:12.5px;
+    color:var(--mist);
+    line-height:1.5;
+  }
+  .disclaimer{
+    font-size:11px;
+    color:var(--mist);
+    margin:-8px 0 14px;
+    font-style:italic;
+  }
+
+  /* Ticket */
+  .ticket{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 18px 16px;
+    overflow:hidden;
+  }
+  .ticket::before{
+    content:"";
+    position:absolute;
+    top:0;bottom:0;left:38px;
+    border-left:1px dashed var(--line);
+  }
+  .ticket::after{
+    content:"";
+    position:absolute;
+    left:38px; top:-7px;
+    width:14px;height:14px;
+    background:var(--parchment-panel);
+    border:1px solid var(--line);
+    border-radius:50%;
+    transform:translateX(-50%);
+  }
+  .ticket .punch-bottom{
+    position:absolute;
+    left:38px; bottom:-7px;
+    width:14px;height:14px;
+    background:var(--parchment-panel);
+    border:1px solid var(--line);
+    border-radius:50%;
+    transform:translateX(-50%);
+  }
+  .ticket-body{padding-left:26px;}
+  .ticket-code{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--mist);
+    letter-spacing:.06em;
+  }
+  .ticket-guest{
+    font-family:'Spectral',serif;
+    font-size:20px;
+    font-weight:600;
+    color:var(--pine-dark);
+    margin:4px 0 10px;
+  }
+  .ticket-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:6px 0;
+    border-top:1px dashed var(--line);
+  }
+  .ticket-row:first-of-type{border-top:none;}
+  .ticket-row .k{color:var(--mist);}
+  .ticket-row .v{font-weight:600;color:var(--ink);text-align:right;}
+  .ticket-section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--mist);
+    margin:12px 0 2px;
+  }
+  .ticket-notes{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--ink);
+    font-style:italic;
+    background:var(--parchment);
+    border-radius:6px;
+    padding:8px 10px;
+  }
+
+  /* Dashboard */
+  .stat-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:8px 0;
+    border-top:1px dashed var(--line);
+    font-size:13px;
+  }
+  .stat-row:first-of-type{border-top:none;}
+  .stat-row .k{color:var(--mist);}
+  .stat-row .v{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--pine-dark);font-size:14px;}
+
+  /* Upcoming list */
+  .stay-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:320px;overflow:auto;}
+  .stay-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:9px 4px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    background:none;
+    border-left:none;border-right:none;border-top:none;
+    width:100%;
+    text-align:left;
+    font-family:'Inter',sans-serif;
+  }
+  .stay-item:hover{background:var(--birch-soft);}
+  .stay-item .dates{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mist);}
+  .stay-item .guest{font-size:13.5px;font-weight:600;color:var(--pine-dark);}
+  .empty-state{
+    font-size:13px;
+    color:var(--mist);
+    padding:10px 2px;
+  }
+
+  .activity-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;}
+  .activity-item{font-size:12.5px;color:var(--ink);line-height:1.5;border-bottom:1px dashed var(--line);padding-bottom:8px;}
+  .activity-time{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mist);margin-top:2px;}
+
+  .log-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .log-table th{
+    text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--mist);
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  .log-table td{
+    padding:8px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  .log-table td.when{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--mist);white-space:nowrap;}
+  .log-table td.action-created{color:var(--pine-dark);font-weight:600;}
+  .log-table td.action-edited{color:var(--gold);font-weight:600;}
+  .log-table td.action-cancelled{color:var(--berry);font-weight:600;}
+
+  .loading-note{font-size:12.5px;color:var(--mist);}
+
+  @media print{
+    body *{display:none !important;}
+    .print-only, .print-only *{display:block !important;}
+    .print-only{
+      position:static;
+      padding:24px;
+      font-family:'Inter',sans-serif;
+      color:#111;
+      background:#fff;
+    }
+    .print-only h1{font-family:'Spectral',serif;font-size:22px;margin-bottom:4px;}
+    .print-only table{border-collapse:collapse;width:100%;margin-top:12px;}
+    .print-only td{padding:6px 4px;border-bottom:1px solid #ccc;font-size:13px;}
+    .print-only td:first-child{color:#666;width:140px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="calendarView">
+  <header>
+    <div>
+      <p class="brand-eyebrow">Booking Ledger</p>
+      <div class="title-row">
+        <h1 id="h1Title">The Chalet</h1>
+        <select id="chaletSelect" class="chalet-select"></select>
+        <button class="add-chalet-btn" id="addChaletBtn" type="button">+ Chalet</button>
+        <button class="add-chalet-btn" id="themeToggleBtn" type="button" title="Toggle dark mode">🌙</button>
+        <button class="add-chalet-btn" id="langToggleBtn" type="button" title="Switch language">EN / عربي</button>
+        <button class="add-chalet-btn" id="logoutBtn" type="button">Log out</button>
+      </div>
+    </div>
+    <div class="month-nav">
+      <button id="prevYear" aria-label="Previous year" title="Previous year">«</button>
+      <button id="prevMonth" aria-label="Previous month">‹</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button id="nextMonth" aria-label="Next month">›</button>
+      <button id="nextYear" aria-label="Next year" title="Next year">»</button>
+      <button class="today-btn" id="todayBtn">Today</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="cal-card">
+      <div class="weekdays" id="weekdaysRow">
+        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--berry-soft);border:1px solid var(--berry);"></span><span id="legOvernight">Overnight booking</span></span>
+        <span><span class="swatch" style="background:var(--slate-soft);border:1px solid var(--slate);"></span><span id="legMaint">Maintenance / blocked</span></span>
+        <span><span class="swatch" style="background:var(--birch-soft);border:1px solid var(--birch);"></span><span id="legSelected">Selected stay</span></span>
+        <span><span class="swatch" style="background:var(--gold-soft);border:1px solid var(--gold);"></span><span id="legMorning">Morning session</span></span>
+        <span><span class="swatch" style="background:var(--night-soft);border:1px solid var(--night);"></span><span id="legEvening">Evening session</span></span>
+        <span id="loadingNote" class="loading-note"></span>
+      </div>
+      <p class="legend-note" id="legendNoteText">Days with only a morning or evening session still have an open slot — click them to add the other session.</p>
+    </div>
+
+    <div class="side">
+      <div class="panel" id="dashboardPanel"></div>
+      <div class="panel" id="actionPanel"></div>
+      <div class="panel">
+        <h2 id="listHeading">Upcoming stays</h2>
+        <p class="sub" id="listSub">Every booking on the books, soonest first.</p>
+        <div class="field search-box">
+          <input id="searchInput" type="text" placeholder="Search name, phone, or code…">
+        </div>
+        <ul class="stay-list" id="stayList"></ul>
+      </div>
+      <div class="panel">
+        <h2 id="exportHeading">Export &amp; tools</h2>
+        <p class="sub" id="exportSub">Pull the ledger out for records or sharing.</p>
+        <button class="btn btn-ghost" id="exportCsvBtn" type="button">Export CSV</button>
+        <button class="btn btn-ghost" id="exportXlsxBtn" type="button">Export Excel</button>
+        <button class="btn btn-ghost" id="openLogBtn" type="button">View activity log →</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="logPage" style="display:none;">
+    <header>
+      <div>
+        <p class="brand-eyebrow">Booking Ledger</p>
+        <div class="title-row"><h1 id="logPageTitle">Activity log</h1></div>
+      </div>
+      <button class="today-btn" id="backToCalendarBtn" type="button">← Back to calendar</button>
+    </header>
+    <div class="panel">
+      <h2 id="logPageHeading">All activity</h2>
+      <p class="sub" id="logPageSub">Every logged change for this chalet, newest first.</p>
+      <table class="log-table" id="logTable"></table>
+    </div>
+  </div>
+</div>
+
+<div class="print-only" id="printArea"></div>
+
+<script>
+(function(){
+(function(){
+  // Drop-in replacement for Claude's window.storage, backed by this server's own API.
+  // Same get(key, shared) / set(key, value, shared) shape, so the app code below is unchanged.
+  const storage = {
+    async get(key, shared){
+      if(!shared){
+        const v = localStorage.getItem(key);
+        return v === null ? null : { key, value: v };
+      }
+      const res = await fetch('/api/kv/' + encodeURIComponent(key));
+      if(res.status === 401){ window.location.href = '/login.html'; return null; }
+      if(res.status === 404) return null;
+      if(!res.ok) throw new Error('storage get failed');
+      return res.json();
+    },
+    async set(key, value, shared){
+      if(!shared){
+        localStorage.setItem(key, value);
+        return { key, value };
+      }
+      const res = await fetch('/api/kv/' + encodeURIComponent(key), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value })
+      });
+      if(res.status === 401){ window.location.href = '/login.html'; return null; }
+      if(!res.ok) throw new Error('storage set failed');
+      return res.json();
+    }
+  };
+  window.storage = storage;
+})();
+
+  const grid = document.getElementById('grid');
+  const monthLabel = document.getElementById('monthLabel');
+  const actionPanel = document.getElementById('actionPanel');
+  const dashboardPanel = document.getElementById('dashboardPanel');
+  const stayList = document.getElementById('stayList');
+  const loadingNote = document.getElementById('loadingNote');
+  const logTableEl = document.getElementById('logTable');
+
+  const SLOT_LABELS = {
+    morning: { name: 'Morning session', time: '9:30 AM – 9:00 PM' },
+    evening: { name: 'Evening session', time: '10:00 PM – 8:00 AM' },
+    overnight: { name: 'Overnight stay', time: null }
+  };
+  const ROLES = ['Owner','Manager','Employee'];
+
+  const STR = {
+    en: {
+      bookAStay: 'Book a stay', clickOpenDay: 'Click an open day on the calendar to set check-in, then another for check-out.',
+      calendarHint: 'Full-day cells (berry/slate) hold one entry. Days with just an AM/PM tag still have one session open — click them to add it.',
+      legendOvernight: 'Overnight booking', legendMaintenance: 'Maintenance / blocked', legendSelected: 'Selected stay',
+      legendMorning: 'Morning session', legendEvening: 'Evening session',
+      legendNote: 'Days with only a morning or evening session still have an open slot — click them to add the other session.',
+      thisMonth: 'This month', bookingsLbl: 'Bookings', occupiedDays: 'Occupied days', revenueConfirmed: 'Revenue (confirmed)',
+      collected: 'Collected', outstanding: 'Outstanding',
+      newBooking: 'New booking', holdDates: 'Hold these dates, for a guest or to block them off.',
+      guestBooking: 'Guest booking', maintBlocked: 'Maintenance / blocked',
+      overnightBtn: 'Overnight', morningBtn: 'Morning (9:30–9pm)', eveningBtn: 'Evening (10pm–8am)',
+      dateLbl: 'Date', datesLbl: 'Dates', singleDayOnly: 'Sessions are single-day — only {d} will be booked.',
+      guestName: 'Guest name', reason: 'Reason', reasonPlaceholder: 'Cleaning, repairs, etc.', whoStaying: "Who's staying",
+      phone: 'Phone', phoneHint: '(include country code for WhatsApp)', email: 'Email', optional: '(optional)',
+      adults: 'Adults', children: 'Children', total: 'Total (JD)', deposit: 'Deposit paid (JD)',
+      bookedBy: 'Booked by', role: 'Role', roleDisclaimer: "Role is a label for the activity log only — it doesn't restrict what anyone can do here.",
+      notes: 'Notes', notesPlaceholder: 'Arrival time, anything worth flagging',
+      confirmBooking: 'Confirm booking', confirmBlock: 'Confirm block', clearSelection: 'Clear selection',
+      pickCheckout: 'Pick the checkout date', pickCheckoutSub: 'Start set to {d}. Click another day to close the range, or click it again for a single day (session or one-night stay).',
+      bookingDetail: 'Booking detail', maintBlockTitle: 'Maintenance block',
+      everythingLogged: 'Everything logged for this stay.', chaletUnavailable: 'Chalet marked unavailable for these dates.',
+      checkIn: 'Check-in', checkOut: 'Check-out', nights: 'Nights', starts: 'Starts', ends: 'Ends', days: 'Days',
+      session: 'Session', hours: 'Hours', guests: 'Guests', adultsChildren: '{a} adults, {c} children',
+      payment: 'Payment', remaining: 'Remaining', status: 'Status',
+      bookedOn: 'Booked on', lastEdited: 'Last edited',
+      sendWhatsapp: 'Send WhatsApp confirmation', print: 'Print', edit: 'Edit',
+      removeBlock: 'Remove this block', cancelBooking: 'Cancel this booking', backToCalendar: 'Back to calendar',
+      editBooking: 'Edit booking', editBlock: 'Edit block', changeDetail: 'Change any detail and save.',
+      saveChanges: 'Save changes', discardChanges: 'Discard changes',
+      upcomingStays: 'Upcoming stays', everyBooking: 'Every booking on the books, soonest first.',
+      searchPlaceholder: 'Search name, phone, or code…', searchResults: 'Search results',
+      matches: '{n} match{es} for "{q}"', noMatches: 'No bookings match that.', emptyCalendar: "Nothing on the books yet — the calendar is wide open.",
+      exportTools: 'Export & tools', pullLedger: 'Pull the ledger out for records or sharing.',
+      exportCsv: 'Export CSV', exportExcel: 'Export Excel', viewLog: 'View activity log →',
+      activityLog: 'Activity log', allActivity: 'All activity', loggedChanges: '{n} logged change{s}, newest first.',
+      when: 'When', who: 'Who', action: 'Action', booking: 'Booking', noActivity: 'No activity logged yet.',
+      backToCal: '← Back to calendar', loading: 'Loading…', fetching: 'Fetching the ledger.',
+      today: 'Today', addChalet: '+ Chalet', logout: 'Log out',
+      weekdays: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      totalLbl: 'Total', depositPaidLbl: 'Deposit paid',
+      confirmRemoveBlock: 'Remove this maintenance block?',
+      confirmCancelBooking: 'Cancel the booking for {name}? This cannot be undone.',
+      andNameNeeded: 'and your name are both needed to log this.',
+      datesAre: 'Those dates are', pickAnotherRange: 'Pick another range or session.',
+      conflictMaint: 'blocked for maintenance ({name})',
+      conflictMorning: 'booked for the morning session, {name}',
+      conflictEvening: 'booked for the evening session, {name}',
+      conflictOvernight: 'already booked overnight for {name}',
+      waHello: 'Hello {name},\nYour booking at {chalet} is confirmed.\n\n',
+      waCheckIn: 'Check-in: ', waCheckOut: '\nCheck-out: ', waThanks: '\n\nThank you.',
+      startDateOnOrBefore: 'Pick a start date on or before the end date.',
+      bothRequired: '{label} and booked-by name are both required.',
+      overlapWith: 'Those dates overlap with an existing entry for {name}.',
+      overlapWithGeneric: 'Those dates are {msg}.',
+      couldNotSave: 'Could not save — check your connection and try again.',
+      createdLbl: 'Created', editedLbl: 'Edited', cancelledLbl: 'Cancelled',
+    },
+    ar: {
+      bookAStay: 'احجز إقامة', clickOpenDay: 'اضغط على يوم فاضي بالتقويم لتحديد تاريخ الدخول، وبعدها يوم تاني لتاريخ الخروج.',
+      calendarHint: 'الأيام الملوّنة كامل (بيرة/رمادي) فيها حجز واحد. الأيام يلي فيها تاغ AM أو PM بس، لسا فيها فترة فاضية — اضغط عليها لتضيفها.',
+      legendOvernight: 'حجز مبيت', legendMaintenance: 'صيانة / غير متاح', legendSelected: 'الإقامة المحددة',
+      legendMorning: 'فترة صباحية', legendEvening: 'فترة سهرة',
+      legendNote: 'الأيام يلي فيها فترة وحدة بس (صباحية أو سهرة) لسا فيها فترة فاضية — اضغط عليها لتضيف الفترة التانية.',
+      thisMonth: 'هالشهر', bookingsLbl: 'الحجوزات', occupiedDays: 'أيام مشغولة', revenueConfirmed: 'الإيراد المؤكد',
+      collected: 'المحصّل', outstanding: 'الباقي',
+      newBooking: 'حجز جديد', holdDates: 'احجز هالتواريخ لضيف، أو خلّيها محجوزة (صيانة).',
+      guestBooking: 'حجز ضيف', maintBlocked: 'صيانة / غير متاح',
+      overnightBtn: 'مبيت', morningBtn: 'صباحية (9:30–9م)', eveningBtn: 'سهرة (10م–8ص)',
+      dateLbl: 'التاريخ', datesLbl: 'التواريخ', singleDayOnly: 'الفترات ليوم واحد بس — رح ينحجز {d} فقط.',
+      guestName: 'اسم الضيف', reason: 'السبب', reasonPlaceholder: 'تنظيف، صيانة...الخ', whoStaying: 'مين رح يقيم',
+      phone: 'رقم الهاتف', phoneHint: '(ضيف كود الدولة عشان الواتساب يشتغل)', email: 'الإيميل', optional: '(اختياري)',
+      adults: 'كبار', children: 'أطفال', total: 'المبلغ الكلي (دينار)', deposit: 'العربون المدفوع (دينار)',
+      bookedBy: 'حجزه', role: 'الدور', roleDisclaimer: 'الدور مجرد تسمية للسجل بس — ما بيمنع أو يسمح لحدا يسوي شي بالموقع.',
+      notes: 'ملاحظات', notesPlaceholder: 'وقت الوصول، أي شي يستاهل تنويه',
+      confirmBooking: 'تأكيد الحجز', confirmBlock: 'تأكيد الحظر', clearSelection: 'إلغاء التحديد',
+      pickCheckout: 'اختر تاريخ الخروج', pickCheckoutSub: 'تاريخ الدخول محدد بـ {d}. اضغط يوم تاني لإغلاق الفترة، أو اضغط نفس اليوم لحجز يوم واحد بس.',
+      bookingDetail: 'تفاصيل الحجز', maintBlockTitle: 'حظر صيانة',
+      everythingLogged: 'كل تفاصيل هاي الإقامة مسجلة.', chaletUnavailable: 'الشاليه محدد كغير متاح بهاي التواريخ.',
+      checkIn: 'تاريخ الدخول', checkOut: 'تاريخ الخروج', nights: 'عدد الليالي', starts: 'يبدأ', ends: 'ينتهي', days: 'أيام',
+      session: 'الفترة', hours: 'الساعات', guests: 'عدد الضيوف', adultsChildren: '{a} كبار، {c} أطفال',
+      payment: 'الدفع', remaining: 'الباقي', status: 'الحالة',
+      bookedOn: 'تاريخ الحجز', lastEdited: 'آخر تعديل',
+      sendWhatsapp: 'إرسال تأكيد واتساب', print: 'طباعة', edit: 'تعديل',
+      removeBlock: 'حذف هالحظر', cancelBooking: 'إلغاء الحجز', backToCalendar: 'الرجوع للتقويم',
+      editBooking: 'تعديل الحجز', editBlock: 'تعديل الحظر', changeDetail: 'غيّر أي تفصيل واحفظ.',
+      saveChanges: 'حفظ التعديلات', discardChanges: 'تجاهل التعديلات',
+      upcomingStays: 'الإقامات الجاية', everyBooking: 'كل الحجوزات المسجلة، الأقرب أولاً.',
+      searchPlaceholder: 'دور بالاسم أو الهاتف أو الرمز…', searchResults: 'نتائج البحث',
+      matches: '{n} نتيجة لـ"{q}"', noMatches: 'ما في حجوزات مطابقة.', emptyCalendar: 'ما في ولا حجز لهلق — التقويم فاضي بالكامل.',
+      exportTools: 'تصدير وأدوات', pullLedger: 'صدّر السجل للأرشفة أو المشاركة.',
+      exportCsv: 'تصدير CSV', exportExcel: 'تصدير إكسل', viewLog: 'عرض سجل النشاط ←',
+      activityLog: 'سجل النشاط', allActivity: 'كل النشاطات', loggedChanges: '{n} تغيير مسجل، الأحدث أولاً.',
+      when: 'الوقت', who: 'مين', action: 'الإجراء', booking: 'الحجز', noActivity: 'ما في نشاط مسجل لهلق.',
+      backToCal: '→ الرجوع للتقويم', loading: 'جاري التحميل…', fetching: 'عم نجيب السجل.',
+      today: 'اليوم', addChalet: '+ شاليه', logout: 'تسجيل خروج',
+      weekdays: ['إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت','أحد'],
+      totalLbl: 'المبلغ الكلي', depositPaidLbl: 'العربون المدفوع',
+      confirmRemoveBlock: 'حذف هالحظر (الصيانة)؟',
+      confirmCancelBooking: 'إلغاء حجز {name}؟ ما بينرجع بعد الإلغاء.',
+      andNameNeeded: 'واسمك، الاثنين لازم عشان نسجل هاد.',
+      datesAre: 'هاي التواريخ', pickAnotherRange: 'اختر فترة تانية أو جلسة تانية.',
+      conflictMaint: 'محجوزة للصيانة ({name})',
+      conflictMorning: 'محجوزة لفترة صباحية، {name}',
+      conflictEvening: 'محجوزة لفترة سهرة، {name}',
+      conflictOvernight: 'محجوزة مبيت مسبقاً لـ {name}',
+      waHello: 'مرحبا {name}،\nحجزك بـ{chalet} مؤكد.\n\n',
+      waCheckIn: 'تاريخ الدخول: ', waCheckOut: '\nتاريخ الخروج: ', waThanks: '\n\nشكراً.',
+      startDateOnOrBefore: 'اختر تاريخ بداية قبل أو بنفس تاريخ النهاية.',
+      bothRequired: '{label} واسم الحاجز، الاثنين مطلوبين.',
+      overlapWith: 'هاي التواريخ فيها تداخل مع حجز موجود لـ{name}.',
+      overlapWithGeneric: 'هاي التواريخ {msg}.',
+      couldNotSave: 'ما انحفظ — تأكد من الاتصال وحاول مرة ثانية.',
+      createdLbl: 'أنشأ', editedLbl: 'عدّل', cancelledLbl: 'ألغى',
+    }
+  };
+  let currentLang = localStorage.getItem('ui-lang') || 'en';
+  let currentTheme = localStorage.getItem('ui-theme') || 'light';
+  function t(key, vars){
+    let s = (STR[currentLang] && STR[currentLang][key]) || (STR.en[key]) || key;
+    if(vars) Object.keys(vars).forEach(k=>{ s = s.replace('{'+k+'}', vars[k]); });
+    return s;
+  }
+  function applyTheme(){
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    const btn = document.getElementById('themeToggleBtn');
+    if(btn) btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+  }
+  function applyLang(){
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    applyStaticStrings();
+  }
+  function applyStaticStrings(){
+    const set = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+    document.getElementById('todayBtn').textContent = t('today');
+    document.getElementById('addChaletBtn').textContent = t('addChalet');
+    document.getElementById('logoutBtn').textContent = t('logout');
+    const wd = t('weekdays');
+    const wdRow = document.getElementById('weekdaysRow');
+    if(wdRow) wdRow.innerHTML = wd.map(d=>`<div>${d}</div>`).join('');
+    set('legOvernight', t('legendOvernight'));
+    set('legMaint', t('legendMaintenance'));
+    set('legSelected', t('legendSelected'));
+    set('legMorning', t('legendMorning'));
+    set('legEvening', t('legendEvening'));
+    set('legendNoteText', t('legendNote'));
+    set('exportHeading', t('exportTools'));
+    set('exportSub', t('pullLedger'));
+    document.getElementById('exportCsvBtn').textContent = t('exportCsv');
+    document.getElementById('exportXlsxBtn').textContent = t('exportExcel');
+    document.getElementById('openLogBtn').textContent = t('viewLog');
+    document.getElementById('backToCalendarBtn').textContent = t('backToCal');
+    set('logPageTitle', t('activityLog'));
+    document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+  }
+
+  let viewDate = new Date();
+  viewDate.setDate(1);
+  let bookings = [];
+  let activity = [];
+  let chalets = [{ id: 'default', name: 'The Chalet' }];
+  let currentChaletId = 'default';
+  let storageReady = false;
+  let selection = { start: null, end: null };
+  let selectedBookingId = null;
+  let lastAgentName = '';
+  let lastRole = 'Owner';
+  let newBookingType = 'guest';
+  let newBookingSlot = 'overnight';
+  let editingBookingId = null;
+  let searchQuery = '';
+
+  function fmt(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function parse(s){
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function prettyDate(s){
+    return parse(s).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  }
+  function prettyDateTime(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  }
+  function isBeforeToday(s){
+    const t = new Date(); t.setHours(0,0,0,0);
+    return parse(s) < t;
+  }
+  function initials(name){
+    return (name||'').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  }
+  function code(id){
+    return 'CH-' + id.toString().slice(-5).toUpperCase();
+  }
+  function rangesOverlap(s1,e1,s2,e2){
+    return s1 <= e2 && s2 <= e1;
+  }
+  function isFullDayBooking(b){
+    return b.type === 'maintenance' || b.slot === 'overnight';
+  }
+  function bookingsForDate(dateStr){
+    return bookings.filter(b => dateStr >= b.startDate && dateStr <= b.endDate);
+  }
+  function paymentStatus(b){
+    const total = Number(b.totalPrice) || 0;
+    if(total <= 0) return null;
+    const dep = Number(b.deposit) || 0;
+    if(dep <= 0) return 'Unpaid';
+    if(dep >= total) return 'Paid in full';
+    return 'Partially paid';
+  }
+  function chaletName(id){
+    const c = chalets.find(x=>x.id===id);
+    return c ? c.name : 'Chalet';
+  }
+  function chaletStorageKey(id){ return id === 'default' ? 'bookings' : 'bookings:'+id; }
+  function activityStorageKey(id){ return id === 'default' ? 'activity' : 'activity:'+id; }
+
+  function findConflict(candidate, excludeId){
+    const candidateFullDay = candidate.type === 'maintenance' || candidate.slot === 'overnight';
+    let d = parse(candidate.startDate);
+    const end = parse(candidate.endDate);
+    while(d <= end){
+      const dStr = fmt(d);
+      const clashes = bookings.filter(b => b.id !== excludeId && dStr >= b.startDate && dStr <= b.endDate);
+      for(const ex of clashes){
+        const exFullDay = isFullDayBooking(ex);
+        if(candidateFullDay || exFullDay) return ex;
+        if(candidate.slot === ex.slot) return ex;
+      }
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+    }
+    return null;
+  }
+  function conflictMessage(conflict){
+    if(conflict.type === 'maintenance') return t('conflictMaint', {name: conflict.guestName});
+    if(conflict.slot === 'morning') return t('conflictMorning', {name: conflict.guestName});
+    if(conflict.slot === 'evening') return t('conflictEvening', {name: conflict.guestName});
+    return t('conflictOvernight', {name: conflict.guestName});
+  }
+  function matchesQuery(b, q){
+    if((b.guestName||'').toLowerCase().includes(q)) return true;
+    if((b.phone||'').toLowerCase().includes(q)) return true;
+    if(code(b.id).toLowerCase().includes(q)) return true;
+    return false;
+  }
+
+  async function loadChalets(){
+    try{
+      const res = await window.storage.get('chalets', true);
+      chalets = (res && res.value) ? JSON.parse(res.value) : [{ id:'default', name:'The Chalet' }];
+    }catch(e){
+      chalets = [{ id:'default', name:'The Chalet' }];
+    }
+    try{
+      const last = await window.storage.get('last-chalet', false);
+      if(last && last.value && chalets.find(c=>c.id===last.value)) currentChaletId = last.value;
+    }catch(e){}
+  }
+  async function saveChalets(){
+    try{ await window.storage.set('chalets', JSON.stringify(chalets), true); }catch(e){}
+  }
+
+  async function loadBookingsAndActivity(){
+    loadingNote.textContent = 'Loading bookings…';
+    try{
+      const res = await window.storage.get(chaletStorageKey(currentChaletId), true);
+      bookings = res ? JSON.parse(res.value) : [];
+    }catch(e){ bookings = []; }
+    try{
+      const res2 = await window.storage.get(activityStorageKey(currentChaletId), true);
+      activity = res2 ? JSON.parse(res2.value) : [];
+    }catch(e){ activity = []; }
+    loadingNote.textContent = '';
+  }
+  async function saveBookings(){
+    try{
+      const result = await window.storage.set(chaletStorageKey(currentChaletId), JSON.stringify(bookings), true);
+      loadingNote.textContent = '';
+      return !!result;
+    }catch(e){
+      loadingNote.textContent = t('couldNotSave');
+      return false;
+    }
+  }
+  async function saveAgentName(name){
+    lastAgentName = name;
+    try{ await window.storage.set('agent-name', name, false); }catch(e){}
+  }
+  async function saveRole(role){
+    lastRole = role;
+    try{ await window.storage.set('last-role', role, false); }catch(e){}
+  }
+  async function logActivity(action, label, actor, role){
+    activity.unshift({ id: Date.now(), action, label, actor, role, at: new Date().toISOString() });
+    activity = activity.slice(0, 200);
+    try{ await window.storage.set(activityStorageKey(currentChaletId), JSON.stringify(activity), true); }catch(e){}
+    renderActivity();
+  }
+
+  function populateChaletSelect(){
+    const sel = document.getElementById('chaletSelect');
+    sel.innerHTML = chalets.map(c => `<option value="${c.id}" ${c.id===currentChaletId?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  async function switchChalet(id){
+    currentChaletId = id;
+    try{ await window.storage.set('last-chalet', id, false); }catch(e){}
+    selection = {start:null,end:null};
+    selectedBookingId = null;
+    editingBookingId = null;
+    searchQuery = '';
+    const searchEl = document.getElementById('searchInput');
+    if(searchEl) searchEl.value = '';
+    document.getElementById('h1Title').textContent = chaletName(id);
+    await loadBookingsAndActivity();
+    renderAll();
+  }
+
+  function renderAll(){
+    renderCalendar();
+    renderStayList();
+    renderActionPanel();
+    renderDashboard();
+    renderActivity();
+  }
+
+  function renderDashboard(){
+    const year = viewDate.getFullYear(), month = viewDate.getMonth();
+    const monthStart = fmt(new Date(year, month, 1));
+    const monthEnd = fmt(new Date(year, month+1, 0));
+    const inMonth = bookings.filter(b => b.type === 'guest' && rangesOverlap(b.startDate, b.endDate, monthStart, monthEnd));
+    const occupied = new Set();
+    inMonth.forEach(b=>{
+      let d = parse(b.startDate > monthStart ? b.startDate : monthStart);
+      const end = parse(b.endDate < monthEnd ? b.endDate : monthEnd);
+      while(d <= end){ occupied.add(fmt(d)); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); }
+    });
+    const revenue = inMonth.reduce((s,b)=> s + (Number(b.totalPrice)||0), 0);
+    const collected = inMonth.reduce((s,b)=> s + (Number(b.deposit)||0), 0);
+    dashboardPanel.innerHTML = `
+      <h2>${t('thisMonth')}</h2>
+      <p class="sub">${viewDate.toLocaleDateString(currentLang==='ar'?'ar':undefined,{month:'long',year:'numeric'})}</p>
+      <div class="stat-row"><span class="k">${t('bookingsLbl')}</span><span class="v">${inMonth.length}</span></div>
+      <div class="stat-row"><span class="k">${t('occupiedDays')}</span><span class="v">${occupied.size}</span></div>
+      <div class="stat-row"><span class="k">${t('revenueConfirmed')}</span><span class="v">${revenue.toFixed(0)} JD</span></div>
+      <div class="stat-row"><span class="k">${t('collected')}</span><span class="v">${collected.toFixed(0)} JD</span></div>
+      <div class="stat-row"><span class="k">${t('outstanding')}</span><span class="v">${(revenue-collected).toFixed(0)} JD</span></div>
+    `;
+  }
+
+  function renderCalendar(){
+    monthLabel.textContent = viewDate.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    grid.innerHTML = '';
+    const year = viewDate.getFullYear(), month = viewDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    let startOffset = firstDay.getDay() - 1;
+    if(startOffset < 0) startOffset = 6;
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const todayStr = fmt(new Date());
+
+    for(let i=0;i<startOffset;i++){
+      const filler = document.createElement('div');
+      filler.className = 'day filler';
+      grid.appendChild(filler);
+    }
+
+    for(let d=1; d<=daysInMonth; d++){
+      const dateObj = new Date(year, month, d);
+      const dateStr = fmt(dateObj);
+      const btn = document.createElement('button');
+      btn.className = 'day';
+      btn.type = 'button';
+
+      const past = isBeforeToday(dateStr);
+      if(dateStr === todayStr) btn.classList.add('today');
+      if(past) btn.classList.add('past');
+
+      const dayBookings = bookingsForDate(dateStr);
+      const fullDay = dayBookings.find(isFullDayBooking);
+
+      if(fullDay){
+        btn.classList.add('booked');
+        if(fullDay.type === 'maintenance') btn.classList.add('maintenance');
+        btn.innerHTML = `<span class="day-num">${d}</span>`;
+        if(dateStr === fullDay.startDate){
+          const tagText = fullDay.type === 'maintenance' ? 'Blocked' : initials(fullDay.guestName);
+          const tagClass = fullDay.type === 'maintenance' ? 'tag maintenance' : 'tag';
+          btn.innerHTML += `<span class="${tagClass}">${tagText}</span>`;
+        }
+        btn.addEventListener('click', ()=>{
+          selectedBookingId = fullDay.id;
+          editingBookingId = null;
+          selection = {start:null,end:null};
+          renderActionPanel();
+        });
+      } else {
+        if(selection.start && dateStr === selection.start && !selection.end) btn.classList.add('range-edge');
+        if(selection.start && selection.end && dateStr >= selection.start && dateStr <= selection.end){
+          btn.classList.add(dateStr===selection.start || dateStr===selection.end ? 'range-edge' : 'in-range');
+        }
+        let tagsHtml = '';
+        dayBookings.forEach(b=>{
+          const slotClass = b.slot === 'morning' ? 'morning' : 'evening';
+          const label = b.slot === 'morning' ? 'AM' : 'PM';
+          tagsHtml += `<span class="tag ${slotClass}" data-booking-id="${b.id}" title="${escapeHtml(b.guestName)}">${label}</span>`;
+        });
+        const morningB = dayBookings.find(b=>b.slot==='morning');
+        const eveningB = dayBookings.find(b=>b.slot==='evening');
+        if(morningB && eveningB){
+          btn.classList.add('has-sessions');
+          btn.style.background = 'linear-gradient(to bottom, var(--gold-soft) 50%, var(--night-soft) 50%)';
+          btn.style.borderColor = 'var(--slate)';
+        } else if(morningB){
+          btn.classList.add('has-sessions');
+          btn.style.background = 'var(--gold-soft)';
+          btn.style.borderColor = 'var(--gold)';
+        } else if(eveningB){
+          btn.classList.add('has-sessions');
+          btn.style.background = 'var(--night-soft)';
+          btn.style.borderColor = 'var(--night)';
+        }
+        btn.innerHTML = `<span class="day-num">${d}</span>${tagsHtml ? `<div class="day-tags">${tagsHtml}</div>` : ''}`;
+        btn.addEventListener('click', (e)=>{
+          const tagEl = e.target.closest('[data-booking-id]');
+          if(tagEl){
+            e.stopPropagation();
+            selectedBookingId = Number(tagEl.dataset.bookingId);
+            editingBookingId = null;
+            selection = {start:null,end:null};
+            renderActionPanel();
+            return;
+          }
+          handleDayClick(dateStr);
+        });
+      }
+      grid.appendChild(btn);
+    }
+  }
+
+  function handleDayClick(dateStr){
+    selectedBookingId = null;
+    if(!selection.start || (selection.start && selection.end)){
+      selection = {start:dateStr, end:null};
+    } else {
+      if(dateStr < selection.start){
+        selection = {start:dateStr, end:selection.start};
+      } else {
+        selection.end = dateStr;
+      }
+      const fullDayClash = bookings.find(b => isFullDayBooking(b) && rangesOverlap(selection.start, selection.end, b.startDate, b.endDate));
+      if(fullDayClash){
+        renderActionPanel('Those dates cross into '+prettyDate(fullDayClash.startDate)+'–'+prettyDate(fullDayClash.endDate)+', '+conflictMessage(fullDayClash)+'. Pick a clear range, or an open session on that day.');
+        renderCalendar();
+        return;
+      }
+    }
+    renderCalendar();
+    renderActionPanel();
+  }
+
+  function clearSelection(){
+    selection = {start:null,end:null};
+    selectedBookingId = null;
+    editingBookingId = null;
+    renderCalendar();
+    renderActionPanel();
+  }
+
+  function renderActionPanel(errorMsg){
+    if(!storageReady){
+      actionPanel.innerHTML = `<h2>${t('loading')}</h2><p class="sub">${t('fetching')}</p>`;
+      return;
+    }
+
+    if(selectedBookingId){
+      const b = bookings.find(x=>x.id===selectedBookingId);
+      if(!b){ selectedBookingId = null; return renderActionPanel(); }
+
+      if(editingBookingId === b.id){
+        renderEditForm(b, errorMsg);
+        return;
+      }
+
+      const isMaint = b.type === 'maintenance';
+      const isSession = !isMaint && b.slot !== 'overnight';
+      const nightCount = Math.round((parse(b.endDate)-parse(b.startDate))/86400000);
+      const status = paymentStatus(b);
+
+      let dateRows = '';
+      if(isSession){
+        dateRows = `
+          <div class="ticket-row"><span class="k">${t('session')}</span><span class="v">${SLOT_LABELS[b.slot].name}</span></div>
+          <div class="ticket-row"><span class="k">${t('dateLbl')}</span><span class="v">${prettyDate(b.startDate)}</span></div>
+          <div class="ticket-row"><span class="k">${t('hours')}</span><span class="v">${SLOT_LABELS[b.slot].time}</span></div>
+        `;
+      } else {
+        dateRows = `
+          <div class="ticket-row"><span class="k">${isMaint ? t('starts') : t('checkIn')}</span><span class="v">${prettyDate(b.startDate)}</span></div>
+          <div class="ticket-row"><span class="k">${isMaint ? t('ends') : t('checkOut')}</span><span class="v">${prettyDate(b.endDate)}</span></div>
+          <div class="ticket-row"><span class="k">${isMaint ? t('days') : t('nights')}</span><span class="v">${nightCount || 1}</span></div>
+        `;
+      }
+
+      let contactRows = '';
+      if(!isMaint){
+        contactRows = `
+          ${b.phone ? `<div class="ticket-row"><span class="k">${t('phone')}</span><span class="v">${escapeHtml(b.phone)}</span></div>` : ''}
+          ${b.email ? `<div class="ticket-row"><span class="k">${t('email')}</span><span class="v">${escapeHtml(b.email)}</span></div>` : ''}
+          ${(b.adults || b.children) ? `<div class="ticket-row"><span class="k">${t('guests')}</span><span class="v">${t('adultsChildren',{a:b.adults||0,c:b.children||0})}</span></div>` : ''}
+        `;
+      }
+
+      let paymentRows = '';
+      if(!isMaint && Number(b.totalPrice) > 0){
+        const remaining = (Number(b.totalPrice)||0) - (Number(b.deposit)||0);
+        paymentRows = `
+          <div class="ticket-section-label">${t('payment')}</div>
+          <div class="ticket-row"><span class="k">${t('totalLbl')}</span><span class="v">${b.totalPrice} JD</span></div>
+          <div class="ticket-row"><span class="k">${t('depositPaidLbl')}</span><span class="v">${b.deposit||0} JD</span></div>
+          <div class="ticket-row"><span class="k">${t('remaining')}</span><span class="v">${remaining.toFixed(0)} JD</span></div>
+          <div class="ticket-row"><span class="k">${t('status')}</span><span class="v">${status}</span></div>
+        `;
+      }
+
+      actionPanel.innerHTML = `
+        <h2>${isMaint ? t('maintBlockTitle') : t('bookingDetail')}</h2>
+        <p class="sub">${isMaint ? t('chaletUnavailable') : t('everythingLogged')}</p>
+        <div class="ticket">
+          <div class="punch-bottom"></div>
+          <div class="ticket-body">
+            <div class="ticket-code">${code(b.id)}</div>
+            <div class="ticket-guest">${escapeHtml(b.guestName)}</div>
+            ${dateRows}
+            ${contactRows}
+            <div class="ticket-row"><span class="k">${t('bookedBy')}</span><span class="v">${escapeHtml(b.bookedBy)}${b.bookedByRole ? ' ('+escapeHtml(b.bookedByRole)+')' : ''}</span></div>
+            <div class="ticket-row"><span class="k">${t('bookedOn')}</span><span class="v">${prettyDateTime(b.bookedAt)}</span></div>
+            ${b.editedAt ? `<div class="ticket-row"><span class="k">${t('lastEdited')}</span><span class="v">${prettyDateTime(b.editedAt)}</span></div>` : ''}
+            ${paymentRows}
+            ${b.notes ? `<div class="ticket-notes">${escapeHtml(b.notes)}</div>` : ''}
+          </div>
+        </div>
+        ${(!isMaint && b.phone) ? `<a class="btn btn-whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">${t('sendWhatsapp')}</a>` : ''}
+        <button class="btn btn-ghost" id="printBtn" style="margin-top:8px;">${t('print')}</button>
+        <button class="btn btn-ghost" id="editBtn">${t('edit')}</button>
+        <button class="btn btn-danger" id="cancelBtn">${isMaint ? t('removeBlock') : t('cancelBooking')}</button>
+        <button class="btn btn-ghost" id="backBtn">${t('backToCalendar')}</button>
+      `;
+      if(!isMaint && b.phone){
+        const digits = b.phone.replace(/[^\d]/g,'');
+        const timeNote = isSession ? SLOT_LABELS[b.slot].time+', '+prettyDate(b.startDate) : (prettyDate(b.startDate)+' to '+prettyDate(b.endDate));
+        const msg = t('waHello',{name:b.guestName, chalet:chaletName(currentChaletId)})+(isSession ? SLOT_LABELS[b.slot].name+': ' : t('waCheckIn'))+timeNote+(isSession ? '' : t('waCheckOut')+prettyDate(b.endDate))+t('waThanks');
+        document.getElementById('waBtn').href = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+      }
+      document.getElementById('printBtn').addEventListener('click', ()=> printBooking(b));
+      document.getElementById('editBtn').addEventListener('click', ()=>{
+        editingBookingId = b.id;
+        renderActionPanel();
+      });
+      document.getElementById('cancelBtn').addEventListener('click', async ()=>{
+        const msg = isMaint ? t('confirmRemoveBlock') : t('confirmCancelBooking',{name:b.guestName});
+        if(confirm(msg)){
+          bookings = bookings.filter(x=>x.id!==b.id);
+          selectedBookingId = null;
+          const saved = await saveBookings();
+          if(!saved){ renderActionPanel(t('couldNotSave')); return; }
+          await logActivity('cancelled', b.guestName, lastAgentName || 'Someone', lastRole);
+          renderAll();
+        }
+      });
+      document.getElementById('backBtn').addEventListener('click', clearSelection);
+      return;
+    }
+
+    if(selection.start && selection.end){
+      const isMaint = newBookingType === 'maintenance';
+      const isSessionSlot = !isMaint && newBookingSlot !== 'overnight';
+      const spansMultiple = selection.start !== selection.end;
+      actionPanel.innerHTML = `
+        <h2>${t('newBooking')}</h2>
+        <p class="sub">${t('holdDates')}</p>
+        <div class="type-toggle">
+          <button type="button" id="typeGuestBtn" class="${!isMaint ? 'active' : ''}">${t('guestBooking')}</button>
+          <button type="button" id="typeMaintBtn" class="${isMaint ? 'active is-maintenance' : ''}">${t('maintBlocked')}</button>
+        </div>
+        ${!isMaint ? `
+        <div class="type-toggle">
+          <button type="button" id="slotOvernightBtn" class="${newBookingSlot==='overnight' ? 'active' : ''}">${t('overnightBtn')}</button>
+          <button type="button" id="slotMorningBtn" class="${newBookingSlot==='morning' ? 'active is-morning' : ''}">${t('morningBtn')}</button>
+          <button type="button" id="slotEveningBtn" class="${newBookingSlot==='evening' ? 'active is-evening' : ''}">${t('eveningBtn')}</button>
+        </div>` : ''}
+        ${errorMsg ? `<div class="error-msg">${escapeHtml(errorMsg)}</div>` : ''}
+        <div class="field">
+          <label>${(isMaint || newBookingSlot==='overnight') ? t('datesLbl') : t('dateLbl')}</label>
+          <div class="dates-readout">${(isMaint || newBookingSlot==='overnight') ? (prettyDate(selection.start)+' → '+prettyDate(selection.end)) : prettyDate(selection.start)}</div>
+          ${isSessionSlot && spansMultiple ? `<p class="hint" style="margin-top:6px;">${t('singleDayOnly',{d:prettyDate(selection.start)})}</p>` : ''}
+          ${isSessionSlot ? `<p class="hint" style="margin-top:6px;">${SLOT_LABELS[newBookingSlot].time}</p>` : ''}
+        </div>
+        <div class="field">
+          <label for="guestName">${isMaint ? t('reason') : t('guestName')}</label>
+          <input id="guestName" type="text" placeholder="${isMaint ? t('reasonPlaceholder') : t('whoStaying')}">
+        </div>
+        ${isMaint ? '' : `
+        <div class="field">
+          <label for="guestPhone">${t('phone')} <span style="font-weight:400;color:var(--mist);">${t('phoneHint')}</span></label>
+          <input id="guestPhone" type="tel" placeholder="e.g. 9627XXXXXXXX">
+        </div>
+        <div class="field">
+          <label for="guestEmail">${t('email')} <span style="font-weight:400;color:var(--mist);">${t('optional')}</span></label>
+          <input id="guestEmail" type="email" placeholder="guest@example.com">
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="adultsCount">${t('adults')}</label><input id="adultsCount" type="number" min="0" step="1" placeholder="0"></div>
+          <div class="field"><label for="childrenCount">${t('children')}</label><input id="childrenCount" type="number" min="0" step="1" placeholder="0"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="totalPrice">${t('total')}</label><input id="totalPrice" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div class="field"><label for="deposit">${t('deposit')}</label><input id="deposit" type="number" min="0" step="0.01" placeholder="0"></div>
+        </div>`}
+        <div class="field-row">
+          <div class="field"><label for="agentName">${t('bookedBy')}</label><input id="agentName" type="text" placeholder="${t('bookedBy')}" value="${escapeHtml(lastAgentName)}"></div>
+          <div class="field"><label for="agentRole">${t('role')}</label>
+            <select id="agentRole">${ROLES.map(r=>`<option value="${r}" ${r===lastRole?'selected':''}>${r}</option>`).join('')}</select>
+          </div>
+        </div>
+        <p class="disclaimer">${t('roleDisclaimer')}</p>
+        <div class="field">
+          <label for="notes">${t('notes')} <span style="font-weight:400;color:var(--mist);">${t('optional')}</span></label>
+          <textarea id="notes" placeholder="${t('notesPlaceholder')}"></textarea>
+        </div>
+        <button class="btn btn-primary" id="confirmBtn">${isMaint ? t('confirmBlock') : t('confirmBooking')}</button>
+        <button class="btn btn-ghost" id="cancelSelectBtn">${t('clearSelection')}</button>
+      `;
+      document.getElementById('typeGuestBtn').addEventListener('click', ()=>{ newBookingType='guest'; renderActionPanel(); });
+      document.getElementById('typeMaintBtn').addEventListener('click', ()=>{ newBookingType='maintenance'; renderActionPanel(); });
+      if(!isMaint){
+        document.getElementById('slotOvernightBtn').addEventListener('click', ()=>{ newBookingSlot='overnight'; renderActionPanel(); });
+        document.getElementById('slotMorningBtn').addEventListener('click', ()=>{ newBookingSlot='morning'; renderActionPanel(); });
+        document.getElementById('slotEveningBtn').addEventListener('click', ()=>{ newBookingSlot='evening'; renderActionPanel(); });
+      }
+      document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+        const guestName = document.getElementById('guestName').value.trim();
+        const agentName = document.getElementById('agentName').value.trim();
+        const agentRole = document.getElementById('agentRole').value;
+        const notes = document.getElementById('notes').value.trim();
+        const phone = isMaint ? '' : document.getElementById('guestPhone').value.trim();
+        const email = isMaint ? '' : document.getElementById('guestEmail').value.trim();
+        const adults = isMaint ? '' : document.getElementById('adultsCount').value;
+        const children = isMaint ? '' : document.getElementById('childrenCount').value;
+        const totalPrice = isMaint ? '' : document.getElementById('totalPrice').value;
+        const deposit = isMaint ? '' : document.getElementById('deposit').value;
+        if(!guestName || !agentName){
+          renderActionPanel((isMaint ? t('reason') : t('guestName')) + ' ' + t('andNameNeeded'));
+          return;
+        }
+        const slot = isMaint ? undefined : newBookingSlot;
+        const startDate = selection.start;
+        const endDate = (isMaint || slot === 'overnight') ? selection.end : selection.start;
+        const conflict = findConflict({ type:newBookingType, slot, startDate, endDate });
+        if(conflict){
+          renderActionPanel(t('datesAre') + ' ' + conflictMessage(conflict) + '. ' + t('pickAnotherRange'));
+          return;
+        }
+        const booking = {
+          id: Date.now(),
+          type: newBookingType,
+          slot,
+          startDate, endDate,
+          guestName, phone, email, adults, children, totalPrice, deposit,
+          bookedBy: agentName, bookedByRole: agentRole, notes,
+          bookedAt: new Date().toISOString()
+        };
+        bookings.push(booking);
+        const saved = await saveBookings();
+        if(!saved){
+          bookings = bookings.filter(x=>x.id!==booking.id);
+          renderActionPanel(t('couldNotSave'));
+          return;
+        }
+        await saveAgentName(agentName);
+        await saveRole(agentRole);
+        await logActivity('created', guestName, agentName, agentRole);
+        selection = {start:null,end:null};
+        newBookingType = 'guest';
+        newBookingSlot = 'overnight';
+        renderAll();
+      });
+      document.getElementById('cancelSelectBtn').addEventListener('click', clearSelection);
+      return;
+    }
+
+    if(selection.start && !selection.end){
+      actionPanel.innerHTML = `
+        <h2>${t('pickCheckout')}</h2>
+        <p class="sub">${t('pickCheckoutSub',{d:prettyDate(selection.start)})}</p>
+        <button class="btn btn-ghost" id="cancelSelectBtn">${t('clearSelection')}</button>
+      `;
+      document.getElementById('cancelSelectBtn').addEventListener('click', clearSelection);
+      return;
+    }
+
+    actionPanel.innerHTML = `
+      <h2>${t('bookAStay')}</h2>
+      <p class="sub">${t('clickOpenDay')}</p>
+      <p class="hint">${t('calendarHint')}</p>
+    `;
+  }
+
+  function renderEditForm(b, errorMsg){
+    const isMaint = b.type === 'maintenance';
+    const isSession = !isMaint && b.slot !== 'overnight';
+    actionPanel.innerHTML = `
+      <h2>${isMaint ? t('editBlock') : t('editBooking')}</h2>
+      <p class="sub">${t('changeDetail')}</p>
+      ${errorMsg ? `<div class="error-msg">${escapeHtml(errorMsg)}</div>` : ''}
+      ${!isMaint ? `
+      <div class="type-toggle">
+        <button type="button" id="editSlotOvernight" class="${b.slot==='overnight' ? 'active' : ''}">${t('overnightBtn')}</button>
+        <button type="button" id="editSlotMorning" class="${b.slot==='morning' ? 'active is-morning' : ''}">${SLOT_LABELS.morning.name}</button>
+        <button type="button" id="editSlotEvening" class="${b.slot==='evening' ? 'active is-evening' : ''}">${SLOT_LABELS.evening.name}</button>
+      </div>` : ''}
+      <div class="field-row">
+        <div class="field">
+          <label for="editStart">${isMaint ? t('starts') : (isSession ? t('dateLbl') : t('checkIn'))}</label>
+          <input id="editStart" type="date" value="${b.startDate}">
+        </div>
+        ${(isMaint || !isSession) ? `
+        <div class="field">
+          <label for="editEnd">${isMaint ? t('ends') : t('checkOut')}</label>
+          <input id="editEnd" type="date" value="${b.endDate}">
+        </div>` : ''}
+      </div>
+      <div class="field">
+        <label for="editGuestName">${isMaint ? t('reason') : t('guestName')}</label>
+        <input id="editGuestName" type="text" value="${escapeHtml(b.guestName)}">
+      </div>
+      ${isMaint ? '' : `
+      <div class="field">
+        <label for="editPhone">${t('phone')}</label>
+        <input id="editPhone" type="tel" value="${escapeHtml(b.phone || '')}">
+      </div>
+      <div class="field">
+        <label for="editEmail">${t('email')} <span style="font-weight:400;color:var(--mist);">${t('optional')}</span></label>
+        <input id="editEmail" type="email" value="${escapeHtml(b.email || '')}">
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="editAdults">${t('adults')}</label><input id="editAdults" type="number" min="0" step="1" value="${b.adults||''}"></div>
+        <div class="field"><label for="editChildren">${t('children')}</label><input id="editChildren" type="number" min="0" step="1" value="${b.children||''}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="editTotal">${t('total')}</label><input id="editTotal" type="number" min="0" step="0.01" value="${b.totalPrice||''}"></div>
+        <div class="field"><label for="editDeposit">${t('deposit')}</label><input id="editDeposit" type="number" min="0" step="0.01" value="${b.deposit||''}"></div>
+      </div>`}
+      <div class="field-row">
+        <div class="field"><label for="editAgent">${t('bookedBy')}</label><input id="editAgent" type="text" value="${escapeHtml(b.bookedBy)}"></div>
+        <div class="field"><label for="editRole">${t('role')}</label>
+          <select id="editRole">${ROLES.map(r=>`<option value="${r}" ${r===(b.bookedByRole||'Owner')?'selected':''}>${r}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="editNotes">${t('notes')} <span style="font-weight:400;color:var(--mist);">${t('optional')}</span></label>
+        <textarea id="editNotes">${escapeHtml(b.notes || '')}</textarea>
+      </div>
+      <button class="btn btn-primary" id="saveEditBtn">${t('saveChanges')}</button>
+      <button class="btn btn-ghost" id="cancelEditBtn">${t('discardChanges')}</button>
+    `;
+    if(!isMaint){
+      document.getElementById('editSlotOvernight').addEventListener('click', ()=>{ b.slot='overnight'; renderEditForm(b, errorMsg); });
+      document.getElementById('editSlotMorning').addEventListener('click', ()=>{ b.slot='morning'; renderEditForm(b, errorMsg); });
+      document.getElementById('editSlotEvening').addEventListener('click', ()=>{ b.slot='evening'; renderEditForm(b, errorMsg); });
+    }
+    document.getElementById('saveEditBtn').addEventListener('click', async ()=>{
+      const startDate = document.getElementById('editStart').value;
+      const isSessionNow = !isMaint && b.slot !== 'overnight';
+      const endDate = isSessionNow ? startDate : document.getElementById('editEnd').value;
+      const guestName = document.getElementById('editGuestName').value.trim();
+      const agentName = document.getElementById('editAgent').value.trim();
+      const agentRole = document.getElementById('editRole').value;
+      const notes = document.getElementById('editNotes').value.trim();
+      const phone = isMaint ? '' : document.getElementById('editPhone').value.trim();
+      const email = isMaint ? '' : document.getElementById('editEmail').value.trim();
+      const adults = isMaint ? '' : document.getElementById('editAdults').value;
+      const children = isMaint ? '' : document.getElementById('editChildren').value;
+      const totalPrice = isMaint ? '' : document.getElementById('editTotal').value;
+      const deposit = isMaint ? '' : document.getElementById('editDeposit').value;
+      if(!startDate || !endDate || startDate > endDate){
+        renderEditForm(b, t('startDateOnOrBefore'));
+        return;
+      }
+      if(!guestName || !agentName){
+        renderEditForm(b, t('bothRequired',{label: isMaint ? t('reason') : t('guestName')}));
+        return;
+      }
+      const conflict = findConflict({ type: b.type, slot: b.slot, startDate, endDate }, b.id);
+      if(conflict){
+        renderEditForm(b, t('overlapWithGeneric',{msg: conflictMessage(conflict)}));
+        return;
+      }
+      const prev = { startDate:b.startDate, endDate:b.endDate, guestName:b.guestName, phone:b.phone, email:b.email, adults:b.adults, children:b.children, totalPrice:b.totalPrice, deposit:b.deposit, bookedBy:b.bookedBy, bookedByRole:b.bookedByRole, notes:b.notes, editedAt:b.editedAt };
+      b.startDate = startDate;
+      b.endDate = endDate;
+      b.guestName = guestName;
+      b.phone = phone;
+      b.email = email;
+      b.adults = adults;
+      b.children = children;
+      b.totalPrice = totalPrice;
+      b.deposit = deposit;
+      b.bookedBy = agentName;
+      b.bookedByRole = agentRole;
+      b.notes = notes;
+      b.editedAt = new Date().toISOString();
+      const saved = await saveBookings();
+      if(!saved){
+        Object.assign(b, prev);
+        renderEditForm(b, t('couldNotSave'));
+        return;
+      }
+      await logActivity('edited', guestName, agentName, agentRole);
+      editingBookingId = null;
+      renderAll();
+    });
+    document.getElementById('cancelEditBtn').addEventListener('click', ()=>{
+      editingBookingId = null;
+      renderActionPanel();
+    });
+  }
+
+  function renderStayList(){
+    const todayStr = fmt(new Date());
+    const listHeading = document.getElementById('listHeading');
+    const listSub = document.getElementById('listSub');
+    const q = searchQuery.trim().toLowerCase();
+    let items;
+    if(q){
+      items = bookings.filter(b => matchesQuery(b, q)).sort((a,b)=> a.startDate.localeCompare(b.startDate));
+      listHeading.textContent = t('searchResults');
+      listSub.textContent = t('matches', {n: items.length, es: items.length===1?'':'es', q: searchQuery.trim()});
+    } else {
+      items = bookings.filter(b => b.endDate >= todayStr).sort((a,b)=> a.startDate.localeCompare(b.startDate));
+      listHeading.textContent = t('upcomingStays');
+      listSub.textContent = t('everyBooking');
+    }
+    if(items.length===0){
+      stayList.innerHTML = `<li class="empty-state">${q ? t('noMatches') : t('emptyCalendar')}</li>`;
+      return;
+    }
+    stayList.innerHTML = '';
+    items.forEach(b=>{
+      const li = document.createElement('li');
+      let tagLabel = '';
+      if(b.type === 'maintenance') tagLabel = ' · ' + t('legendMaintenance');
+      else if(b.slot === 'morning') tagLabel = ' · ' + SLOT_LABELS.morning.name;
+      else if(b.slot === 'evening') tagLabel = ' · ' + SLOT_LABELS.evening.name;
+      li.innerHTML = `<button class="stay-item">
+          <span class="guest">${escapeHtml(b.guestName)}${tagLabel}</span>
+          <span class="dates">${prettyDate(b.startDate)} → ${prettyDate(b.endDate)}</span>
+        </button>`;
+      li.querySelector('button').addEventListener('click', ()=>{
+        selectedBookingId = b.id;
+        editingBookingId = null;
+        renderActionPanel();
+        viewDate = new Date(parse(b.startDate).getFullYear(), parse(b.startDate).getMonth(), 1);
+        renderCalendar();
+      });
+      stayList.appendChild(li);
+    });
+  }
+
+  function shortDateTime(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString(currentLang==='ar'?'ar':undefined,{month:'short',day:'numeric'}) + ', ' + d.toLocaleTimeString(currentLang==='ar'?'ar':undefined,{hour:'numeric',minute:'2-digit'});
+  }
+
+  function renderActivity(){
+    const heading = document.getElementById('logPageHeading');
+    const sub = document.getElementById('logPageSub');
+    if(heading) heading.textContent = chaletName(currentChaletId) + ' — ' + t('allActivity');
+    if(sub) sub.textContent = t('loggedChanges', {n: activity.length, s: activity.length===1?'':'s'});
+    if(!logTableEl) return;
+    if(activity.length === 0){
+      logTableEl.innerHTML = `<tr><td class="empty-state">${t('noActivity')}</td></tr>`;
+      return;
+    }
+    const actionLabels = { created: t('createdLbl'), edited: t('editedLbl'), cancelled: t('cancelledLbl') };
+    const rows = activity.map(a=>{
+      const actionLabel = actionLabels[a.action] || a.action;
+      return `<tr>
+        <td class="when">${shortDateTime(a.at)}</td>
+        <td>${escapeHtml(a.actor)}${a.role ? ' <span style="color:var(--mist);">('+escapeHtml(a.role)+')</span>' : ''}</td>
+        <td class="action-${a.action}">${actionLabel}</td>
+        <td>${escapeHtml(a.label)}</td>
+      </tr>`;
+    }).join('');
+    logTableEl.innerHTML = `<tr><th>${t('when')}</th><th>${t('who')}</th><th>${t('action')}</th><th>${t('booking')}</th></tr>${rows}`;
+  }
+
+  function bookingsToRows(){
+    return bookings.map(b => ({
+      Code: code(b.id),
+      Type: b.type,
+      Slot: b.slot || '',
+      'Check-in': b.startDate,
+      'Check-out': b.endDate,
+      Guest: b.guestName,
+      Phone: b.phone || '',
+      Email: b.email || '',
+      Adults: b.adults || '',
+      Children: b.children || '',
+      Total: b.totalPrice || '',
+      Deposit: b.deposit || '',
+      Remaining: ((Number(b.totalPrice)||0) - (Number(b.deposit)||0)) || '',
+      Status: paymentStatus(b) || '',
+      'Booked by': b.bookedBy,
+      Role: b.bookedByRole || '',
+      'Booked on': b.bookedAt,
+      Notes: b.notes || ''
+    }));
+  }
+  function exportCsv(){
+    const rows = bookingsToRows();
+    if(rows.length === 0){ alert('No bookings to export yet.'); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(',')].concat(
+      rows.map(r => headers.map(h => '"'+String(r[h]).replace(/"/g,'""')+'"').join(','))
+    ).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = chaletName(currentChaletId) + '-bookings.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function exportXlsx(){
+    if(typeof XLSX === 'undefined'){ alert('The Excel export library did not load — check your connection and try again.'); return; }
+    const rows = bookingsToRows();
+    if(rows.length === 0){ alert('No bookings to export yet.'); return; }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
+    XLSX.writeFile(wb, chaletName(currentChaletId) + '-bookings.xlsx');
+  }
+  function printBooking(b){
+    const isMaint = b.type === 'maintenance';
+    const rows = [
+      ['Code', code(b.id)],
+      ['Dates', prettyDate(b.startDate) + ' – ' + prettyDate(b.endDate)],
+    ];
+    if(!isMaint && b.slot && b.slot !== 'overnight') rows.push(['Session', SLOT_LABELS[b.slot].name + ' (' + SLOT_LABELS[b.slot].time + ')']);
+    if(!isMaint && b.phone) rows.push(['Phone', b.phone]);
+    if(!isMaint && b.email) rows.push(['Email', b.email]);
+    if(!isMaint && (b.adults || b.children)) rows.push(['Guests', (b.adults||0)+' adults, '+(b.children||0)+' children']);
+    if(!isMaint && Number(b.totalPrice) > 0){
+      rows.push(['Total', b.totalPrice+' JD']);
+      rows.push(['Deposit paid', (b.deposit||0)+' JD']);
+      rows.push(['Status', paymentStatus(b)]);
+    }
+    rows.push(['Booked by', b.bookedBy + (b.bookedByRole ? ' ('+b.bookedByRole+')' : '')]);
+    if(b.notes) rows.push(['Notes', b.notes]);
+    const printArea = document.getElementById('printArea');
+    printArea.innerHTML = `<h1>${escapeHtml(b.guestName)}</h1>
+      <p>${escapeHtml(chaletName(currentChaletId))}</p>
+      <table>${rows.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(String(r[1]))}</td></tr>`).join('')}</table>`;
+    window.print();
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', ()=>{
+    viewDate.setMonth(viewDate.getMonth()-1);
+    renderCalendar();
+    renderDashboard();
+  });
+  document.getElementById('nextMonth').addEventListener('click', ()=>{
+    viewDate.setMonth(viewDate.getMonth()+1);
+    renderCalendar();
+    renderDashboard();
+  });
+  document.getElementById('prevYear').addEventListener('click', ()=>{
+    viewDate.setFullYear(viewDate.getFullYear()-1);
+    renderCalendar();
+    renderDashboard();
+  });
+  document.getElementById('nextYear').addEventListener('click', ()=>{
+    viewDate.setFullYear(viewDate.getFullYear()+1);
+    renderCalendar();
+    renderDashboard();
+  });
+  document.getElementById('todayBtn').addEventListener('click', ()=>{
+    viewDate = new Date(); viewDate.setDate(1);
+    renderCalendar();
+    renderDashboard();
+  });
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    searchQuery = e.target.value;
+    renderStayList();
+  });
+  document.getElementById('chaletSelect').addEventListener('change', (e)=>{
+    switchChalet(e.target.value);
+  });
+  document.getElementById('addChaletBtn').addEventListener('click', async ()=>{
+    const name = prompt('Name for the new chalet:');
+    if(!name || !name.trim()) return;
+    const id = 'c' + Date.now();
+    chalets.push({ id, name: name.trim() });
+    await saveChalets();
+    populateChaletSelect();
+    await switchChalet(id);
+  });
+  document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+  document.getElementById('exportXlsxBtn').addEventListener('click', exportXlsx);
+  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    try{ await fetch('/api/logout', { method:'POST' }); }catch(e){}
+    window.location.href = '/login.html';
+  });
+  document.getElementById('openLogBtn').addEventListener('click', ()=>{
+    document.getElementById('calendarView').style.display = 'none';
+    document.getElementById('logPage').style.display = 'block';
+    renderActivity();
+  });
+  document.getElementById('backToCalendarBtn').addEventListener('click', ()=>{
+    document.getElementById('logPage').style.display = 'none';
+    document.getElementById('calendarView').style.display = 'block';
+  });
+  document.getElementById('themeToggleBtn').addEventListener('click', ()=>{
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('ui-theme', currentTheme);
+    applyTheme();
+  });
+  document.getElementById('langToggleBtn').addEventListener('click', ()=>{
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('ui-lang', currentLang);
+    applyLang();
+    renderAll();
+  });
+
+  async function init(){
+    applyTheme();
+    applyLang();
+    await loadChalets();
+    populateChaletSelect();
+    document.getElementById('h1Title').textContent = chaletName(currentChaletId);
+    await loadBookingsAndActivity();
+    try{
+      const agent = await window.storage.get('agent-name', false);
+      lastAgentName = agent ? agent.value : '';
+    }catch(e){ lastAgentName = ''; }
+    try{
+      const role = await window.storage.get('last-role', false);
+      lastRole = (role && ROLES.includes(role.value)) ? role.value : 'Owner';
+    }catch(e){ lastRole = 'Owner'; }
+    storageReady = true;
+    renderAll();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

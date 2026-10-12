@@ -1,0 +1,15 @@
+services:
+  chalet-booking:
+    build: .
+    ports:
+      - "8080:3000"
+    volumes:
+      - chalet-data:/app/data
+    environment:
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=1y6TboDRlVKSsoEF
+      - SESSION_SECRET=5fd7ef1e2160b46e9d9a4615b8f587a3351cb24069e0eb7a
+    restart: unless-stopped
+
+volumes:
+  chalet-data:
